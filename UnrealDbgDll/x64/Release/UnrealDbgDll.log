@@ -1,0 +1,36 @@
+﻿  Common.cpp
+D:\Research\0.temp\UnrealVTDbg-master\Common\Common.cpp(85,48): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\Common\Common.cpp(85,48): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\Common\Common.cpp(247,77): warning C4267: 'argument': conversion from 'size_t' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=int
+          ]
+D:\Research\0.temp\UnrealVTDbg-master\Common\Common.cpp(548,42): warning C4566: character represented by universal-character-name '\u4E25' cannot be represented in the current code page (1252)
+D:\Research\0.temp\UnrealVTDbg-master\Common\Common.cpp(548,42): warning C4566: character represented by universal-character-name '\u91CD' cannot be represented in the current code page (1252)
+D:\Research\0.temp\UnrealVTDbg-master\Common\Common.cpp(548,42): warning C4566: character represented by universal-character-name '\u9519' cannot be represented in the current code page (1252)
+D:\Research\0.temp\UnrealVTDbg-master\Common\Common.cpp(548,42): warning C4566: character represented by universal-character-name '\u8BEF' cannot be represented in the current code page (1252)
+  Blowfish.cpp
+D:\Research\0.temp\UnrealVTDbg-master\Common\Encrypt\Blowfish\Blowfish.cpp(607,15): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\Common\Encrypt\Blowfish\Blowfish.cpp(610,31): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\Common\Encrypt\Blowfish\Blowfish.cpp(632,18): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\Common\Encrypt\Blowfish\Blowfish.cpp(636,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\Common\Encrypt\Blowfish\Blowfish.cpp(703,10): warning C4244: '=': conversion from 'SIZE_T' to 'int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\Common\Encrypt\Blowfish\Blowfish.cpp(707,19): warning C4244: '=': conversion from 'SIZE_T' to 'int', possible loss of data
+  FileSystem.cpp
+  Logger.cpp
+  DispatchData.cpp
+D:\Research\0.temp\UnrealVTDbg-master\UnrealDbgDll\Channels\DispatchData.cpp(38,22): warning C4244: '=': conversion from 'SIZE_T' to 'ULONG', possible loss of data
+  dllmain.cpp
+  Globals.cpp
+  InitNTDevice.cpp
+  Interface.cpp
+  StartProcess.cpp
+     Creating library D:\Research\0.temp\UnrealVTDbg-master\x64\Release\UnrealDbgDll.lib and object D:\Research\0.temp\UnrealVTDbg-master\x64\Release\UnrealDbgDll.exp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 663 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  UnrealDbgDll.vcxproj -> D:\Research\0.temp\UnrealVTDbg-master\x64\Release\UnrealDbgDll.dll
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.

@@ -1,0 +1,60 @@
+﻿  Building 'VT_Driver' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
+  Assembling ASM\AsmCallset.asm...
+  Assembling ASM\exception-routines.asm...
+  Assembling ASM\interrupt-handlers.asm...
+  Assembling ASM\lde64.asm...
+  Assembling ASM\vm-exit.asm...
+  Assembling ASM\vm-launch.asm...
+  StringHandler.cpp
+D:\Research\0.temp\UnrealVTDbg-master\Common\Ring0\String\StringHandler.cpp(92,17): warning C4996: 'wcsncpy': This function or variable may be unsafe. Consider using wcsncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Research\0.temp\UnrealVTDbg-master\Common\Ring0\String\StringHandler.cpp(98,17): warning C4996: 'wcsncpy': This function or variable may be unsafe. Consider using wcsncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  Driver.cpp
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\Driver.cpp(20,59): warning C4805: '==': unsafe mix of type 'unsigned __int64' and type 'bool' in operation
+  EPT.cpp
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\EPT.cpp(630,21): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\EPT.cpp(2457,23): warning C4244: '=': conversion from 'unsigned __int64' to 'unsigned short', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\EPT.cpp(2458,23): warning C4244: '=': conversion from 'unsigned __int64' to 'unsigned short', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\EPT.cpp(2459,23): warning C4244: '=': conversion from 'unsigned __int64' to 'unsigned short', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\EPT.cpp(2460,23): warning C4244: '=': conversion from 'unsigned __int64' to 'unsigned short', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\EPT.cpp(2461,23): warning C4244: '=': conversion from 'unsigned __int64' to 'unsigned short', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\EPT.cpp(2462,23): warning C4244: '=': conversion from 'unsigned __int64' to 'unsigned short', possible loss of data
+  gdt.cpp
+  Globals.cpp
+  hypervisor_gateway.cpp
+  hypervisor_routines.cpp
+  idt.cpp
+  InitNtoskrnl.cpp
+  invalid_ept.cpp
+  invalid_pcid.cpp
+  invalid_vpid.cpp
+  poolmanager.cpp
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\poolmanager.cpp(156,61): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\poolmanager.cpp(162,64): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\poolmanager.cpp(168,37): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\poolmanager.cpp(174,68): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+  spinlock.cpp
+  vmcall_handler.cpp
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmcall_handler.cpp(20,55): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned long', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmcall_handler.cpp(21,55): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned long', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmcall_handler.cpp(158,28): warning C4805: '==': unsafe mix of type 'unsigned __int64' and type 'bool' in operation
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmcall_handler.cpp(177,28): warning C4805: '==': unsafe mix of type 'unsigned __int64' and type 'bool' in operation
+  vmcs.cpp
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmcs.cpp(590,28): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned long', possible loss of data
+  vmexit_handler.cpp
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(64,55): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned long', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(65,55): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned long', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(181,46): warning C4805: '==': unsafe mix of type 'unsigned __int64' and type 'bool' in operation
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(806,53): warning C4244: 'argument': conversion from 'uint16_t' to 'unsigned char', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(937,31): warning C4244: 'argument': conversion from 'uint16_t' to 'unsigned char', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(1210,21): warning C4244: 'argument': conversion from 'unsigned __int64' to 'uint32_t', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(1311,31): warning C4244: 'argument': conversion from 'unsigned __int64' to 'uint32_t', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(1344,21): warning C4244: 'argument': conversion from 'unsigned __int64' to 'uint32_t', possible loss of data
+D:\Research\0.temp\UnrealVTDbg-master\VT_Driver\vmexit_handler.cpp(1352,2): warning C4065: switch statement contains 'default' but no 'case' labels
+  vmm.cpp
+  Generating Code...
+  VT_Driver.vcxproj -> D:\Research\0.temp\UnrealVTDbg-master\x64\Release\VT_Driver.sys
+  Done Adding Additional Store
+  Successfully signed: D:\Research\0.temp\UnrealVTDbg-master\x64\Release\VT_Driver.sys
+  
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.

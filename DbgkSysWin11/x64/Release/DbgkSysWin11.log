@@ -1,0 +1,34 @@
+﻿  Building 'DbgkSysWin11' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
+  Assembling Asm\AsmCode.asm...
+  Assembling Hvm\ASM\AsmCallset.asm...
+  Assembling Hvm\ASM\lde64.asm...
+  ApcInject.cpp
+  StringHandler.cpp
+  DbgkApi.cpp
+  DebugBreak.cpp
+  Driver.cpp
+D:\Research\0.temp\UnrealVTDbg-master\DbgkSysWin11\Driver.cpp(938,43): warning C4311: 'type cast': pointer truncation from 'HANDLE' to 'DWORD'
+D:\Research\0.temp\UnrealVTDbg-master\DbgkSysWin11\Driver.cpp(938,43): warning C4302: 'type cast': truncation from 'HANDLE' to 'DWORD'
+  Blowfish.cpp
+  Globals.cpp
+  EptHook.cpp
+  hypervisor_gateway.cpp
+  InitNtoskrnl.cpp
+  InitSymbolic.cpp
+  InitWin32kbase.cpp
+  InitWin32kfull.cpp
+  MyList.cpp
+  log.cpp
+  ReadWrite.cpp
+D:\Research\0.temp\UnrealVTDbg-master\DbgkSysWin11\Memory\ReadWrite.cpp(66,39): warning C4244: 'argument': conversion from 'SIZE_T' to 'ULONG', possible loss of data
+  process.cpp
+  Callbacks.cpp
+  ProtectProcess.cpp
+  ProtectDrx.cpp
+  Generating Code...
+  Compiling...
+  BypassFindWnd.cpp
+  Generating Code...
+  DbgkSysWin11.vcxproj -> D:\Research\0.temp\UnrealVTDbg-master\x64\Release\DbgkSysWin11.sys
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
