@@ -9,7 +9,8 @@ public __vm_call
 __vm_call proc vmcall_reason: DWORD, vmcallinfo: DWORD
 	push ecx
 	push edx
-    mov eax,066666666h
+	rdtsc
+	xor eax, edx
 	mov ecx, vmcall_reason
 	mov edx, vmcallinfo
 	;vmcall

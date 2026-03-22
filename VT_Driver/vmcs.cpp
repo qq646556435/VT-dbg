@@ -1,4 +1,4 @@
-﻿#include "Driver.h"
+#include "Driver.h"
 #include "poolmanager.h"
 #include "Globals.h"
 #include "segment.h"
@@ -185,7 +185,7 @@ void set_primary_controls(__vmx_primary_processor_based_control& primary_control
 	* of RDMSR that read from the IA32_TIME_STAMP_COUNTER MSR return a value modified by
 	* the TSC offset field (see Section 24.6.5 and Section 25.3).
 	*/
-	primary_controls.use_tsc_offsetting = false;
+	primary_controls.use_tsc_offsetting = true;
 
 	/**
 	* This control determines whether executions of HLT cause VM exits.
@@ -215,11 +215,7 @@ void set_primary_controls(__vmx_primary_processor_based_control& primary_control
 	/**
 	* This control determines whether executions of RDTSC and RDTSCP cause VM exits.
 	*/
-#ifdef _MINIMAL
-	primary_controls.rdtsc_exiting = false;
-#else
 	primary_controls.rdtsc_exiting = true;
-#endif
 
 	/**
 	* 当“CR3-load exiting”为 1 时，在 VMX non-root operation 中使用 MOV to CR3 指令
@@ -683,9 +679,9 @@ void fill_vmcs_host_fields(__vcpu* vcpu)
 	//寄存器base
 	hv::vmwrite<unsigned __int64>(HOST_FS_BASE, reinterpret_cast<size_t>(vcpu));
 	hv::vmwrite<unsigned __int64>(HOST_GS_BASE, 0);
-	hv::vmwrite<unsigned __int64>(HOST_TR_BASE, reinterpret_cast<size_t>(&vcpu->host_tss));
-	hv::vmwrite<unsigned __int64>(HOST_GDTR_BASE, reinterpret_cast<size_t>(&vcpu->host_gdt));
-	hv::vmwrite<unsigned __int64>(HOST_IDTR_BASE, reinterpret_cast<size_t>(&vcpu->host_idt));
+	hv::vmwrite<unsigned __int64>(HOST_TR_BASE, reinterpret_cast<size_t>(vcpu->host_tss));
+	hv::vmwrite<unsigned __int64>(HOST_GDTR_BASE, reinterpret_cast<size_t>(vcpu->host_gdt));
+	hv::vmwrite<unsigned __int64>(HOST_IDTR_BASE, reinterpret_cast<size_t>(vcpu->host_idt));
 
 	//控制寄存器
 	hv::vmwrite<unsigned __int64>(HOST_CR0, __readcr0());
@@ -708,6 +704,7 @@ void fill_vmcs_host_fields(__vcpu* vcpu)
 	hv::vmwrite<unsigned __int64>(HOST_CR4, host_cr4.flags);
 
 	//栈对齐
+	NT_ASSERT(vcpu->host_stack);
 	auto const rsp = ((reinterpret_cast<size_t>(vcpu->host_stack) + VMM_STACK_SIZE) & ~0b1111ull) - 8;
 	hv::vmwrite<unsigned __int64>(HOST_RSP, rsp);
 	hv::vmwrite<void*>(HOST_RIP, hv::vm_exit);
@@ -883,10 +880,10 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	//memset(vcpu->vcpu_bitmaps.io_bitmap_b, 0xff, PAGE_SIZE);
 
 #ifndef _MINIMAL
-	memset(vcpu->vcpu_bitmaps.msr_bitmap, 0xff, PAGE_SIZE);
+	memset(vcpu->msr_bitmap, 0xff, sizeof(vmx_msr_bitmap));
 #endif
 
-	hv::set_msr_bitmap(vcpu->msr_bitmap, IA32_FEATURE_CONTROL, true);
+	hv::set_msr_bitmap(*vcpu->msr_bitmap, IA32_FEATURE_CONTROL, true);
 
 	// Hypervisor features
 	//VM-execution 控制字段
@@ -914,7 +911,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned int>(PAGE_FAULT_ERROR_CODE_MATCH, 0);
 
 	if (primary_controls.use_msr_bitmaps == true)
-		hv::vmwrite(MSR_BITMAP_ADDRESS, MmGetPhysicalAddress(&vcpu->msr_bitmap).QuadPart);
+		hv::vmwrite(MSR_BITMAP_ADDRESS, MmGetPhysicalAddress(vcpu->msr_bitmap).QuadPart);
 
 	if (primary_controls.use_io_bitmaps == true)
 	{
@@ -934,6 +931,8 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(VM_ENTRY_INTERRUPTION_INFO_FIELD, 0);
 	hv::vmwrite<unsigned __int64>(VM_ENTRY_EXCEPTION_ERROR_CODE, 0);
 	hv::vmwrite<unsigned __int64>(VM_ENTRY_INSTRUCTION_LENGTH, 0);
+
+	hv::vmwrite<unsigned __int64>(TSC_OFFSET, 0);
 	
 	fill_vmcs_guest_fields(vcpu, guest_rsp);	
 	fill_vmcs_host_fields(vcpu);

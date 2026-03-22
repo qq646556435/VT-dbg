@@ -1,9 +1,9 @@
-object Form1: TForm1
+object AppWnd: TConfigWnd
   Left = 0
   Top = 0
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = #34394#24187#35843#35797#22120'   by: Bug'#24037#31243#24072'   QQ'#32676':740336586'
+  Caption = 'System Monitor'
   ClientHeight = 510
   ClientWidth = 882
   Color = clBtnFace
@@ -16,7 +16,7 @@ object Form1: TForm1
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   TextHeight = 15
-  object RichEdit1: TRichEdit
+  object memoLog1: TRichEdit
     Left = 8
     Top = 282
     Width = 866
@@ -29,146 +29,146 @@ object Form1: TForm1
     Font.Name = #23435#20307
     Font.Style = []
     Lines.Strings = (
-      'RichEdit1')
+      'memoLog1')
     ParentFont = False
     ReadOnly = True
     ScrollBars = ssVertical
     TabOrder = 0
   end
-  object GroupBox1: TGroupBox
+  object grpBox1: TGroupBox
     Left = 8
     Top = 8
     Width = 401
     Height = 121
-    Caption = #31995#32479#20449#24687
+    Caption = 'System profile'
     TabOrder = 1
-    object Label_SystemName: TLabel
+    object lblSysName: TLabel
       Left = 16
       Top = 24
       Width = 51
       Height = 15
-      Caption = #31995#32479#21517#31216':'
+      Caption = 'OS name:'
     end
-    object Label_SystemVer: TLabel
+    object lblSysVer: TLabel
       Left = 16
       Top = 56
       Width = 51
       Height = 15
-      Caption = #31995#32479#29256#26412':'
+      Caption = 'OS version:'
     end
-    object Label_CPU: TLabel
+    object lblCpu: TLabel
       Left = 17
       Top = 88
       Width = 50
       Height = 15
-      Caption = 'CPU'#22411#21495':'
+      Caption = 'Processor:'
     end
   end
-  object GroupBox2: TGroupBox
+  object grpBox2: TGroupBox
     Left = 8
     Top = 135
     Width = 401
     Height = 137
-    Caption = #21151#33021#21306#22495
+    Caption = 'Controls'
     TabOrder = 2
-    object CheckBox1: TCheckBox
+    object chkFlag1: TCheckBox
       Left = 17
       Top = 24
       Width = 97
       Height = 17
-      Caption = #20445#25252#35843#35797#22120
+      Caption = 'Feature A'
       Checked = True
       Enabled = False
       State = cbChecked
       TabOrder = 0
     end
-    object CheckBox2: TCheckBox
+    object chkFlag2: TCheckBox
       Left = 17
       Top = 70
       Width = 97
       Height = 17
-      Caption = #26080#30165#36719#20214#26029#28857
+      Caption = 'Feature B'
       Checked = True
       Enabled = False
       State = cbChecked
       TabOrder = 1
     end
-    object CheckBox3: TCheckBox
+    object chkFlag3: TCheckBox
       Left = 17
       Top = 47
       Width = 97
       Height = 17
-      Caption = #26080#30165#30828#20214#26029#28857
+      Caption = 'Feature C'
       Checked = True
       Enabled = False
       State = cbChecked
       TabOrder = 2
     end
-    object CheckBox4: TCheckBox
+    object chkFlag4: TCheckBox
       Left = 17
       Top = 93
       Width = 97
       Height = 17
-      Caption = #24322#24120#36807#28388
+      Caption = 'Feature D'
       Checked = True
       Enabled = False
       State = cbChecked
       TabOrder = 3
     end
-    object CheckBox5: TCheckBox
+    object chkFlag5: TCheckBox
       Left = 17
       Top = 116
       Width = 97
       Height = 17
-      Caption = #38543#26426#36827#31243#21517
+      Caption = 'Feature E'
       Enabled = False
       TabOrder = 4
     end
-    object CheckBox6: TCheckBox
+    object chkFlag6: TCheckBox
       Left = 158
       Top = 24
       Width = 115
       Height = 17
-      Caption = #24378#21046#21093#31163#35843#35797#22120
+      Caption = 'Feature F'
       Checked = True
       Enabled = False
       State = cbChecked
       TabOrder = 5
     end
-    object EnterVTDebuggingMode: TButton
+    object btnAction1: TButton
       Left = 155
       Top = 61
       Width = 166
       Height = 63
-      Caption = #36827#20837'VT'#35843#35797#27169#24335
+      Caption = 'Start service'
       TabOrder = 6
-      OnClick = EnterVTDebuggingModeClick
+      OnClick = btnAction1Click
     end
   end
-  object PageControl1: TPageControl
+  object pageMain1: TPageControl
     Left = 432
     Top = 8
     Width = 442
     Height = 268
-    ActivePage = TabSheet1
+    ActivePage = tabSheet1
     TabOrder = 3
-    object TabSheet1: TTabSheet
-      Caption = #35843#35797#22120#21015#34920
-      object DbgListView: TListView
+    object tabSheet1: TTabSheet
+      Caption = 'Items'
+      object listItems1: TListView
         Left = 3
         Top = 3
         Width = 428
         Height = 232
         Columns = <
           item
-            Caption = #24207#21495
+            Caption = '#'
           end
           item
-            Caption = #35843#35797#22120
+            Caption = 'Name'
             Width = 200
           end
           item
-            Caption = #25991#20214#36335#24452
+            Caption = 'Path'
             Width = 500
           end>
         GridLines = True
@@ -176,26 +176,26 @@ object Form1: TForm1
         RowSelect = True
         TabOrder = 0
         ViewStyle = vsReport
-        OnMouseDown = DbgListViewMouseDown
+        OnMouseDown = listItems1MouseDown
       end
     end
-    object TabSheet2: TTabSheet
-      Caption = #23450#21046#21270#23545#25239
+    object tabSheet2: TTabSheet
+      Caption = 'Advanced'
       ImageIndex = 1
       DesignSize = (
         434
         238)
-      object pgcConfrontation: TPageControl
+      object pageSub1: TPageControl
         Left = 3
         Top = 3
         Width = 428
         Height = 232
-        ActivePage = TabSheet3
+        ActivePage = tabSheet3
         Anchors = [akLeft, akTop, akRight, akBottom]
         TabOrder = 0
-        object TabSheet3: TTabSheet
-          Caption = 'TL('#29579#26435#19982#33258#30001')'
-          object Image1: TImage
+        object tabSheet3: TTabSheet
+          Caption = 'Module A'
+          object imgPick1: TImage
             Left = 369
             Top = 167
             Width = 32
@@ -227,23 +227,25 @@ object Form1: TForm1
               8000000080000000800000008000000080000000800000008000000080000000
               800000008000000080000000800000008000000080000000FFFFFFFFFFFFFFFF
               FFFFFFFF}
-            OnMouseDown = Image1MouseDown
-            OnMouseMove = Image1MouseMove
-            OnMouseUp = Image1MouseUp
+            OnMouseDown = imgPick1MouseDown
+            OnMouseMove = imgPick1MouseMove
+            OnMouseUp = imgPick1MouseUp
           end
-          object Label1: TLabel
+          object lblDrag: TLabel
             Left = 260
             Top = 178
             Width = 99
             Height = 15
-            Caption = #25302#21160#36873#25321#30446#26631#31383#21475':'
+            Caption = 'Drag to select target window'
           end
-          object Label2: TLabel
+          object lblNote: TLabel
             Left = 17
             Top = 135
             Width = 237
             Height = 45
-            Caption = #27880#24847': '#23450#21046#21270#23545#25239#38656#35201#23454#26102#20851#27880#28216#25103#26356#26032#65292' '#33509#13#10#28216#25103#26356#26032#21518#23545#25239#21487#33021#24050#32463#22833#25928#12290#13#10#35831#32852#31995#31649#29702#20154#21592#65281
+            Caption = 
+              'Note: advanced options may require application restart after up' +
+              'dates.'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clRed
             Font.Height = -12
@@ -251,64 +253,64 @@ object Form1: TForm1
             Font.Style = []
             ParentFont = False
           end
-          object TL_EnabledConfrontat: TCheckBox
+          object chkOpt7: TCheckBox
             Left = 16
             Top = 3
             Width = 137
             Height = 17
-            Caption = #21551#21160#23450#21046#21270#23545#25239
+            Caption = 'Enable module hooks'
             TabOrder = 0
-            OnClick = TL_EnabledConfrontatClick
+            OnClick = chkOpt7Click
           end
-          object GroupBox3: TGroupBox
+          object grpBox3: TGroupBox
             Left = 19
             Top = 33
             Width = 174
             Height = 96
-            Caption = #23450#21046#21270#23545#25239
+            Caption = 'Sub-options'
             TabOrder = 1
-            object TL_HandlerGetTickCountCheck: TCheckBox
+            object chkOpt8: TCheckBox
               Left = 16
               Top = 32
               Width = 169
               Height = 17
-              Caption = #22788#29702'GetTickCount'#26816#27979
+              Caption = 'Timer consistency check'
               TabOrder = 0
-              OnClick = TL_HandlerGetTickCountCheckClick
+              OnClick = chkOpt8Click
             end
-            object TL_BlockResumeThread: TCheckBox
+            object chkOpt9: TCheckBox
               Left = 16
               Top = 56
               Width = 137
               Height = 17
-              Caption = #38459#27490#28216#25103#24674#22797#32447#31243
+              Caption = 'Suspend worker threads'
               Enabled = False
               TabOrder = 1
-              OnClick = TL_BlockResumeThreadClick
+              OnClick = chkOpt9Click
             end
           end
         end
       end
     end
   end
-  object OpenDialog1: TOpenDialog
+  object dlgOpen1: TOpenDialog
     Left = 796
     Top = 82
   end
-  object DebuggerPopupMenu: TPopupMenu
+  object popMenu1: TPopupMenu
     Left = 684
     Top = 90
-    object StartDebuggerMenu: TMenuItem
-      Caption = #21551#21160
-      OnClick = StartDebuggerMenuClick
+    object mnuCmd1: TMenuItem
+      Caption = 'Run'
+      OnClick = mnuCmd1Click
     end
-    object AddDebuggerMenu: TMenuItem
-      Caption = #28155#21152
-      OnClick = AddDebuggerMenuClick
+    object mnuCmd2: TMenuItem
+      Caption = 'Add'
+      OnClick = mnuCmd2Click
     end
-    object DelDebuggerMenu: TMenuItem
-      Caption = #31227#38500
-      OnClick = DelDebuggerMenuClick
+    object mnuCmd3: TMenuItem
+      Caption = 'Remove'
+      OnClick = mnuCmd3Click
     end
   end
 end

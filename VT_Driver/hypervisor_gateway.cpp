@@ -1,4 +1,5 @@
-﻿#include "Driver.h"
+#include "Driver.h"
+#include "../Common/VT_Driver/vmcall_obfuscate.h"
 #include "hypervisor_gateway.h"
 #include "AsmCallset.h"
 #include "vmcall_reason.h"
@@ -28,7 +29,7 @@ namespace hvgt
 		UNREFERENCED_PARAMETER(Dpc);
 		UNREFERENCED_PARAMETER(DeferredContext);
 
-		__vm_call(VMCALL_VMXOFF, 0, 0, 0);
+		__vm_call(vmcall_reason_encode(VMCALL_VMXOFF), 0, 0, 0);
 		KeSignalCallDpcSynchronize(SystemArgument2);
 		KeSignalCallDpcDone(SystemArgument1);
 	}
@@ -38,7 +39,7 @@ namespace hvgt
 		UNREFERENCED_PARAMETER(Dpc);
 		UNREFERENCED_PARAMETER(DeferredContext);
 
-		__vm_call(VMCALL_INVEPT_CONTEXT, true, 0, 0);
+		__vm_call(vmcall_reason_encode(VMCALL_INVEPT_CONTEXT), true, 0, 0);
 		KeSignalCallDpcSynchronize(SystemArgument2);
 		KeSignalCallDpcDone(SystemArgument1);
 	}
@@ -48,7 +49,7 @@ namespace hvgt
 		UNREFERENCED_PARAMETER(Dpc);
 		UNREFERENCED_PARAMETER(DeferredContext);
 
-		__vm_call(VMCALL_INVEPT_CONTEXT, false, 0, 0);
+		__vm_call(vmcall_reason_encode(VMCALL_INVEPT_CONTEXT), false, 0, 0);
 		KeSignalCallDpcSynchronize(SystemArgument2);
 		KeSignalCallDpcDone(SystemArgument1);
 	}
@@ -57,7 +58,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call_ex(VMCALL_READ_SOFTWARE_BREAKPOINT, (unsigned __int64)args->target_address,
+		if (__vm_call_ex(vmcall_reason_encode(VMCALL_READ_SOFTWARE_BREAKPOINT), (unsigned __int64)args->target_address,
 			(unsigned __int64)args->proxy_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -71,7 +72,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call_ex(VMCALL_HIDE_SOFTWARE_BREAKPOINT, (unsigned __int64)args->target_address,
+		if (__vm_call_ex(vmcall_reason_encode(VMCALL_HIDE_SOFTWARE_BREAKPOINT), (unsigned __int64)args->target_address,
 			(unsigned __int64)args->proxy_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -85,7 +86,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call_ex(VMCALL_EPT_CC_HOOK, (unsigned __int64)args->target_address,
+		if (__vm_call_ex(vmcall_reason_encode(VMCALL_EPT_CC_HOOK), (unsigned __int64)args->target_address,
 			(unsigned __int64)args->proxy_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -99,7 +100,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<UnHookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call(VMCALL_EPT_UNHOOK_FUNCTION, args->unhook_all_functions,
+		if (__vm_call(vmcall_reason_encode(VMCALL_EPT_UNHOOK_FUNCTION), args->unhook_all_functions,
 			(unsigned __int64)args->function_to_unhook, args->current_cr3))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -113,7 +114,7 @@ namespace hvgt
 	{
 		const auto statuses = reinterpret_cast<volatile SHORT*>(DeferredContext);
 
-		if (__vm_call(VMCALL_TEST, 0, 0, 0))
+		if (__vm_call(vmcall_reason_encode(VMCALL_TEST), 0, 0, 0))
 		{
 			InterlockedIncrement16(statuses);
 		}
@@ -139,7 +140,7 @@ namespace hvgt
 			// restrict execution to the specified cpu
 			auto const orig_affinity = KeSetSystemAffinityThreadEx(1ull << iter);
 			__try {
-				__vm_call(VMCALL_VMXOFF, 0, 0, 0);
+				__vm_call(vmcall_reason_encode(VMCALL_VMXOFF), 0, 0, 0);
 			}
 			__except (1)
 			{
@@ -166,9 +167,9 @@ namespace hvgt
 	void hypervisor_visible(bool value)
 	{
 		if (value == true)
-			__vm_call(VMCALL_UNHIDE_HV_PRESENCE, 0, 0, 0);
+			__vm_call(vmcall_reason_encode(VMCALL_UNHIDE_HV_PRESENCE), 0, 0, 0);
 		else
-			__vm_call(VMCALL_HIDE_HV_PRESENCE, 0, 0, 0);
+			__vm_call(vmcall_reason_encode(VMCALL_HIDE_HV_PRESENCE), 0, 0, 0);
 	}
 
 	/// <summary>

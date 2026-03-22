@@ -1,4 +1,4 @@
-﻿#include "Driver.h"
+#include "Driver.h"
 #include "poolmanager.h"
 #include "Globals.h"
 #include "cpuid.h"
@@ -13,6 +13,210 @@
 #include "vmm.h"
 
 EXTERN_C void vmx_save_state();
+
+extern "C" {
+NTKERNELAPI PVOID MmAllocateIndependentPages(SIZE_T NumberOfBytes, ULONG NodeNumber);
+NTKERNELAPI VOID MmFreeIndependentPages(PVOID VirtualAddress, SIZE_T NumberOfBytes);
+}
+
+#ifndef MM_ANY_NODE_OK
+#define MM_ANY_NODE_OK ((ULONG)0xFFFFFFFF)
+#endif
+#ifndef MM_ALLOCATE_FULLY_REQUIRED
+#define MM_ALLOCATE_FULLY_REQUIRED ((ULONG)0x00000040)
+#endif
+#ifndef MdlMappingNoExecute
+#define MdlMappingNoExecute ((ULONG)0x00000020)
+#endif
+
+static void free_stealth_vm_page(void* va, PVOID mdl_opaque)
+{
+	if (!va)
+		return;
+	PMDL const mdl = static_cast<PMDL>(mdl_opaque);
+	if (mdl)
+	{
+		// MmGetSystemAddressForMdlSafe() — WDK 要求用 MmUnmapLockedPages 撤销系统空间映射。
+		// MmFreeMappingAddress 仅与 MmAllocateMappingAddress 配对，不用于本 MDL 映射路径。
+		MmUnmapLockedPages(va, mdl);
+		MmFreePagesFromMdlEx(mdl, 0);
+		IoFreeMdl(mdl);
+	}
+	else
+	{
+		MmFreeIndependentPages(va, PAGE_SIZE);
+	}
+}
+
+// No pool header: MmAllocateIndependentPages first; MDL physical pages + system mapping as fallback.
+static bool alloc_stealth_vm_page_4k(void** out_va, PMDL* out_mdl)
+{
+	*out_va = nullptr;
+	*out_mdl = nullptr;
+
+	PVOID p = MmAllocateIndependentPages(PAGE_SIZE, MM_ANY_NODE_OK);
+	if (p)
+	{
+		RtlSecureZeroMemory(p, PAGE_SIZE);
+		PHYSICAL_ADDRESS const pa = MmGetPhysicalAddress(p);
+		if (pa.QuadPart == 0 || (pa.QuadPart & (PAGE_SIZE - 1)))
+		{
+			MmFreeIndependentPages(p, PAGE_SIZE);
+			return false;
+		}
+		*out_va = p;
+		return true;
+	}
+
+	PHYSICAL_ADDRESS lowAddress = { 0 };
+	PHYSICAL_ADDRESS highAddress;
+	highAddress.QuadPart = MAXULONG64;
+	PHYSICAL_ADDRESS skipBytes = { 0 };
+
+	PMDL mdl = MmAllocatePagesForMdlEx(
+		lowAddress,
+		highAddress,
+		skipBytes,
+		PAGE_SIZE,
+		MmCached,
+		MM_ALLOCATE_FULLY_REQUIRED);
+	if (!mdl)
+		return false;
+
+	PVOID va = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
+	if (!va)
+	{
+		MmFreePagesFromMdlEx(mdl, 0);
+		IoFreeMdl(mdl);
+		return false;
+	}
+
+	RtlSecureZeroMemory(va, PAGE_SIZE);
+	PHYSICAL_ADDRESS const pa = MmGetPhysicalAddress(va);
+	if (pa.QuadPart == 0 || (pa.QuadPart & (PAGE_SIZE - 1)))
+	{
+		MmUnmapLockedPages(va, mdl);
+		MmFreePagesFromMdlEx(mdl, 0);
+		IoFreeMdl(mdl);
+		return false;
+	}
+
+	*out_va = va;
+	*out_mdl = mdl;
+	return true;
+}
+
+void free_vcpu_separate_pages(__vcpu* vcpu)
+{
+	if (!vcpu)
+		return;
+	if (vcpu->host_stack)
+	{
+		ExFreePoolWithTag(vcpu->host_stack, VMM_TAG);
+		vcpu->host_stack = nullptr;
+	}
+	free_stealth_vm_page(vcpu->host_tss, vcpu->host_tss_page_mdl);
+	vcpu->host_tss = nullptr;
+	vcpu->host_tss_page_mdl = nullptr;
+	free_stealth_vm_page(vcpu->host_gdt, vcpu->host_gdt_page_mdl);
+	vcpu->host_gdt = nullptr;
+	vcpu->host_gdt_page_mdl = nullptr;
+	free_stealth_vm_page(vcpu->host_idt, vcpu->host_idt_page_mdl);
+	vcpu->host_idt = nullptr;
+	vcpu->host_idt_page_mdl = nullptr;
+	free_stealth_vm_page(vcpu->msr_bitmap, vcpu->msr_bitmap_page_mdl);
+	vcpu->msr_bitmap = nullptr;
+	vcpu->msr_bitmap_page_mdl = nullptr;
+	free_stealth_vm_page(vcpu->vmcs, vcpu->vmcs_page_mdl);
+	vcpu->vmcs = nullptr;
+	vcpu->vmcs_page_mdl = nullptr;
+	free_stealth_vm_page(vcpu->vmxon, vcpu->vmxon_page_mdl);
+	vcpu->vmxon = nullptr;
+	vcpu->vmxon_page_mdl = nullptr;
+}
+
+bool allocate_vcpu_isolated_regions(__vcpu* vcpu)
+{
+	void* vmcs_va = nullptr;
+	void* msr_va = nullptr;
+	void* vmxon_va = nullptr;
+	void* idt_va = nullptr;
+	void* gdt_va = nullptr;
+	void* tss_va = nullptr;
+	PMDL vmcs_mdl = nullptr;
+	PMDL msr_mdl = nullptr;
+	PMDL vmxon_mdl = nullptr;
+	PMDL idt_mdl = nullptr;
+	PMDL gdt_mdl = nullptr;
+	PMDL tss_mdl = nullptr;
+
+	if (!alloc_stealth_vm_page_4k(&vmcs_va, &vmcs_mdl))
+		return false;
+	if (!alloc_stealth_vm_page_4k(&msr_va, &msr_mdl))
+	{
+		free_stealth_vm_page(vmcs_va, vmcs_mdl);
+		return false;
+	}
+	if (!alloc_stealth_vm_page_4k(&vmxon_va, &vmxon_mdl))
+	{
+		free_stealth_vm_page(msr_va, msr_mdl);
+		free_stealth_vm_page(vmcs_va, vmcs_mdl);
+		return false;
+	}
+	if (!alloc_stealth_vm_page_4k(&idt_va, &idt_mdl))
+	{
+		free_stealth_vm_page(vmxon_va, vmxon_mdl);
+		free_stealth_vm_page(msr_va, msr_mdl);
+		free_stealth_vm_page(vmcs_va, vmcs_mdl);
+		return false;
+	}
+	if (!alloc_stealth_vm_page_4k(&gdt_va, &gdt_mdl))
+	{
+		free_stealth_vm_page(idt_va, idt_mdl);
+		free_stealth_vm_page(vmxon_va, vmxon_mdl);
+		free_stealth_vm_page(msr_va, msr_mdl);
+		free_stealth_vm_page(vmcs_va, vmcs_mdl);
+		return false;
+	}
+	if (!alloc_stealth_vm_page_4k(&tss_va, &tss_mdl))
+	{
+		free_stealth_vm_page(gdt_va, gdt_mdl);
+		free_stealth_vm_page(idt_va, idt_mdl);
+		free_stealth_vm_page(vmxon_va, vmxon_mdl);
+		free_stealth_vm_page(msr_va, msr_mdl);
+		free_stealth_vm_page(vmcs_va, vmcs_mdl);
+		return false;
+	}
+
+	uint8_t* const stack_pg = static_cast<uint8_t*>(ExAllocatePoolWithTag(NonPagedPool, VMM_STACK_SIZE, VMM_TAG));
+	if (!stack_pg)
+	{
+		free_stealth_vm_page(tss_va, tss_mdl);
+		free_stealth_vm_page(gdt_va, gdt_mdl);
+		free_stealth_vm_page(idt_va, idt_mdl);
+		free_stealth_vm_page(vmxon_va, vmxon_mdl);
+		free_stealth_vm_page(msr_va, msr_mdl);
+		free_stealth_vm_page(vmcs_va, vmcs_mdl);
+		return false;
+	}
+	RtlZeroMemory(stack_pg, VMM_STACK_SIZE);
+
+	vcpu->vmcs = static_cast<vmcs*>(vmcs_va);
+	vcpu->vmcs_page_mdl = reinterpret_cast<PVOID>(vmcs_mdl);
+	vcpu->msr_bitmap = static_cast<vmx_msr_bitmap*>(msr_va);
+	vcpu->msr_bitmap_page_mdl = reinterpret_cast<PVOID>(msr_mdl);
+	vcpu->vmxon = static_cast<vmxon*>(vmxon_va);
+	vcpu->vmxon_page_mdl = reinterpret_cast<PVOID>(vmxon_mdl);
+	vcpu->host_idt = static_cast<segment_descriptor_interrupt_gate_64*>(idt_va);
+	vcpu->host_idt_page_mdl = reinterpret_cast<PVOID>(idt_mdl);
+	vcpu->host_gdt = static_cast<segment_descriptor_32*>(gdt_va);
+	vcpu->host_gdt_page_mdl = reinterpret_cast<PVOID>(gdt_mdl);
+	vcpu->host_tss = static_cast<task_state_segment_64*>(tss_va);
+	vcpu->host_tss_page_mdl = reinterpret_cast<PVOID>(tss_mdl);
+	vcpu->host_stack = stack_pg;
+
+	return true;
+}
 
 void free_vmm_context()
 {
@@ -68,6 +272,8 @@ void free_vmm_context()
 						free_pool(g_vmm_context.vcpu[i].ept_state);
 					}
 
+					free_vcpu_separate_pages(&g_vmm_context.vcpu[i]);
+
 					//free_pool(g_vmm_context.vcpu_table[i]);
 				}
 			}
@@ -115,11 +321,16 @@ bool allocate_vmm_context()
 
 	for (unsigned int iter = 0; iter < g_vmm_context.processor_count; iter++)
 	{
+		if (!allocate_vcpu_isolated_regions(&g_vmm_context.vcpu[iter]))
+		{
+			outDebug("allocate_vcpu_isolated_regions失败!\n");
+			return false;
+		}
 		if (init_vcpu(&g_vmm_context.vcpu[iter]) == false)
 		{
 			outDebug("init_vcpu失败!\n");
 			return false;
-		}			
+		}
 	}
 
 	g_vmm_context.hv_presence = true;
@@ -175,10 +386,6 @@ bool init_vcpu(__vcpu* vcpu)
 	}
 	RtlSecureZeroMemory(vcpu->ept_state, sizeof(__ept_state));
 	InitializeListHead(&vcpu->ept_state->hooked_page_list);
-
-	RtlSecureZeroMemory(&vcpu->host_tss, sizeof(task_state_segment_64));
-	RtlSecureZeroMemory(&vcpu->host_gdt, sizeof(segment_descriptor_32) * HOST_GDT_DESCRIPTOR_COUNT);
-	RtlSecureZeroMemory(&vcpu->host_idt, sizeof(segment_descriptor_interrupt_gate_64) * HOST_IDT_DESCRIPTOR_COUNT);
 
 	//
 	// Initialize ept structure
@@ -318,14 +525,14 @@ bool init_logical_processor(unsigned int iter)
 	//调节控制寄存器 cr4 cr0来启用vmx模式
 	adjust_control_registers();
 
-	if (!hv::enter_vmx_operation(vcpu->vmxon))  //进入vmx模式
+	if (!hv::enter_vmx_operation(*vcpu->vmxon))  //进入vmx模式
 	{
 		LogError("Failed to put vcpu %d into VMX operation.\n", processor_number);
 		return false;
 	}
 
 
-	if (!hv::load_vmcs_pointer(vcpu->vmcs))
+	if (!hv::load_vmcs_pointer(*vcpu->vmcs))
 	{
 		LogError("load_vmcs_pointer失败.\n", processor_number);
 		return false;

@@ -1,4 +1,4 @@
-﻿#include "Driver.h"
+#include "Driver.h"
 #include "poolmanager.h"
 #include "Globals.h"
 #include "mtrr.h"
@@ -63,16 +63,17 @@ namespace hv
 
     //创建host的idt和gdt
     void prepare_external_structures(__vcpu* const vcpu) {
-        memset(&vcpu->msr_bitmap, 0, sizeof(vcpu->msr_bitmap));
+        NT_ASSERT(vcpu->msr_bitmap && vcpu->host_tss && vcpu->host_gdt && vcpu->host_idt);
+        memset(vcpu->msr_bitmap, 0, sizeof(*vcpu->msr_bitmap));
         //enable_exit_for_msr_read(vcpu->msr_bitmap, IA32_FEATURE_CONTROL, true);
 
         //enable_mtrr_exiting(vcpu);
 
         // we don't care about anything that's in the TSS
-        memset(&vcpu->host_tss, 0, sizeof(vcpu->host_tss));
+        memset(vcpu->host_tss, 0, sizeof(*vcpu->host_tss));
 
         prepare_host_idt(vcpu->host_idt);
-        prepare_host_gdt(vcpu->host_gdt, &vcpu->host_tss);
+        prepare_host_gdt(vcpu->host_gdt, vcpu->host_tss);
 
         //prepare_ept(vcpu->ept);
     }

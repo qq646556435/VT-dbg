@@ -190,6 +190,11 @@ vm_exit proc
   jnz stop_virtualization
 
   ; if handle_exit returned false, perform a vm-enter as usual
+  push r10
+  xor r10, r10
+  xor r10, r10
+  lea r11, [r11+0]
+  pop r10
   vmresume
 
 stop_virtualization:
@@ -205,6 +210,12 @@ stop_virtualization:
   push rdx
   push rbp
   lea rbp, [rsp + 38h]
+
+  push r10
+  xor r10, r10
+  xor r10, r10
+  lea r11, [r11+0]
+  pop r10
 
   ; push SS
   mov rdx, 0804h; VMCS_GUEST_SS_SELECTOR

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
@@ -16,8 +16,6 @@
 #define HOST_PHYSICAL_MEMORY_PD_COUNT 64
 
 
-#define VMCALL_IDENTIFIER 0xBF5587567C4C830F  //VT_Driver经16位md5摘要
-#define VMCALL_IDENTIFIER2 0x66666666
 #define VMM_TAG 'vtmm'
 #define VMM_STACK_SIZE 0x6000
 
@@ -866,22 +864,24 @@ struct __ept_state
 
 struct __vcpu
 {
-    // host task state segment
-    alignas(0x1000) task_state_segment_64 host_tss;
+    // Host / VMX regions are not embedded in the __vcpu allocation: each pointer is
+    // initialized separately (see allocate_vcpu_isolated_regions in vmm.cpp) so their
+    // physical pages are not adjacent to each other or to the vcpu struct.
+    task_state_segment_64* host_tss;
+    segment_descriptor_32* host_gdt;
+    segment_descriptor_interrupt_gate_64* host_idt;
+    vmcs* vmcs;
+    vmxon* vmxon;
+    uint8_t* host_stack;
+    vmx_msr_bitmap* msr_bitmap;
 
-    // host global descriptor table
-    alignas(0x1000) segment_descriptor_32 host_gdt[HOST_GDT_DESCRIPTOR_COUNT];
-
-    // host interrupt descriptor table
-    alignas(0x1000) segment_descriptor_interrupt_gate_64 host_idt[HOST_IDT_DESCRIPTOR_COUNT];
-
-    alignas(0x1000) vmcs vmcs;
-
-    alignas(0x1000) vmxon vmxon;
-
-    alignas(0x1000) uint8_t host_stack[VMM_STACK_SIZE];
-
-    alignas(0x1000) vmx_msr_bitmap msr_bitmap;
+    // Opaque PMDL when fallback uses MmAllocatePagesForMdlEx; nullptr if MmAllocateIndependentPages.
+    PVOID vmcs_page_mdl;
+    PVOID vmxon_page_mdl;
+    PVOID msr_bitmap_page_mdl;
+    PVOID host_idt_page_mdl;
+    PVOID host_gdt_page_mdl;
+    PVOID host_tss_page_mdl;
 
     // the number of NMIs that need to be delivered
     // 需要交付的 NMI 数量
@@ -892,6 +892,11 @@ struct __vcpu
 
     bool hide_vm_exit_overhead;
     uint64_t tsc_offset;
+
+    // Cumulative signed skew applied to guest-visible TSC (VMCS TSC_OFFSET + emulated RDTSC/RDTSCP/RDMSR TSC).
+    // Decremented by host cycles spent in each VM-exit handler to hide transition latency.
+    __int64 tsc_guest_skew;
+    unsigned __int64 vmexit_host_cycle_start;
 
     // the overhead caused by world-transitions
     uint64_t vm_exit_tsc_overhead;

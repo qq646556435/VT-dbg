@@ -1,4 +1,5 @@
 #include "../Driver.h"
+#include "../../Common/VT_Driver/vmcall_obfuscate.h"
 #include "AsmCallset.h"
 #include "vmcall_reason.h"
 #include "../ntapi.h"
@@ -35,7 +36,7 @@ namespace hvgt
 		UNREFERENCED_PARAMETER(Dpc);
 		UNREFERENCED_PARAMETER(DeferredContext);
 
-		__vm_call(VMCALL_VMXOFF, 0, 0, 0);
+		__vm_call(vmcall_reason_encode(VMCALL_VMXOFF), 0, 0, 0);
 		KeSignalCallDpcSynchronize(SystemArgument2);
 		KeSignalCallDpcDone(SystemArgument1);
 	}
@@ -45,7 +46,7 @@ namespace hvgt
 		UNREFERENCED_PARAMETER(Dpc);
 		UNREFERENCED_PARAMETER(DeferredContext);
 
-		__vm_call(VMCALL_INVEPT_CONTEXT, true, 0, 0);
+		__vm_call(vmcall_reason_encode(VMCALL_INVEPT_CONTEXT), true, 0, 0);
 		KeSignalCallDpcSynchronize(SystemArgument2);
 		KeSignalCallDpcDone(SystemArgument1);
 	}
@@ -55,7 +56,7 @@ namespace hvgt
 		UNREFERENCED_PARAMETER(Dpc);
 		UNREFERENCED_PARAMETER(DeferredContext);
 
-		__vm_call(VMCALL_INVEPT_CONTEXT, false, 0, 0);
+		__vm_call(vmcall_reason_encode(VMCALL_INVEPT_CONTEXT), false, 0, 0);
 		KeSignalCallDpcSynchronize(SystemArgument2);
 		KeSignalCallDpcDone(SystemArgument1);
 	}
@@ -64,7 +65,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call_ex(VMCALL_READ_EPT_FAKE_PAGE_MEMORY, (unsigned __int64)args->target_address,
+		if (__vm_call_ex(vmcall_reason_encode(VMCALL_READ_EPT_FAKE_PAGE_MEMORY), (unsigned __int64)args->target_address,
 			(unsigned __int64)args->proxy_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -78,7 +79,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call_ex(VMCALL_READ_SOFTWARE_BREAKPOINT, (unsigned __int64)args->target_address,
+		if (__vm_call_ex(vmcall_reason_encode(VMCALL_READ_SOFTWARE_BREAKPOINT), (unsigned __int64)args->target_address,
 			(unsigned __int64)args->proxy_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -92,7 +93,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call_ex(VMCALL_HIDE_SOFTWARE_BREAKPOINT, (unsigned __int64)args->target_address,
+		if (__vm_call_ex(vmcall_reason_encode(VMCALL_HIDE_SOFTWARE_BREAKPOINT), (unsigned __int64)args->target_address,
 			(unsigned __int64)args->proxy_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -106,7 +107,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call_ex(VMCALL_EPT_RIP_HOOK, (unsigned __int64)args->target_address,
+		if (__vm_call_ex(vmcall_reason_encode(VMCALL_EPT_RIP_HOOK), (unsigned __int64)args->target_address,
 			(unsigned __int64)args->proxy_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -120,7 +121,7 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<UnHookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call(VMCALL_EPT_UNHOOK_FUNCTION, args->unhook_all_functions,
+		if (__vm_call(vmcall_reason_encode(VMCALL_EPT_UNHOOK_FUNCTION), args->unhook_all_functions,
 			(unsigned __int64)args->function_to_unhook, args->current_cr3))
 		{
 			InterlockedIncrement16(&args->statuses);
@@ -135,7 +136,7 @@ namespace hvgt
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
 		PVMCALLINFO vmcallinfo = (PVMCALLINFO)args->target_address;
-		if (__vm_call(vmcallinfo->command, (unsigned __int64)vmcallinfo, 0, 0))
+		if (__vm_call(vmcall_reason_encode(vmcallinfo->command), (unsigned __int64)vmcallinfo, 0, 0))
 		{
 			InterlockedIncrement16(&args->statuses);
 		}
@@ -148,7 +149,7 @@ namespace hvgt
 	{
 		const auto statuses = reinterpret_cast<volatile SHORT*>(DeferredContext);
 
-		if (__vm_call(VMCALL_TEST, 0, 0, 0))
+		if (__vm_call(vmcall_reason_encode(VMCALL_TEST), 0, 0, 0))
 		{
 			InterlockedIncrement16(statuses);
 		}
@@ -183,14 +184,14 @@ namespace hvgt
 	void hypervisor_visible(bool value)
 	{
 		if (value == true)
-			__vm_call(VMCALL_UNHIDE_HV_PRESENCE, 0, 0, 0);
+			__vm_call(vmcall_reason_encode(VMCALL_UNHIDE_HV_PRESENCE), 0, 0, 0);
 		else
-			__vm_call(VMCALL_HIDE_HV_PRESENCE, 0, 0, 0);
+			__vm_call(vmcall_reason_encode(VMCALL_HIDE_HV_PRESENCE), 0, 0, 0);
 	}
 
 	/// <summary>
 	/// Unhook all functions and invalidate tlb
-	/// 卸载全部hook 并刷新tlb
+	/// ???????hook ?????tlb
 	/// </summary>
 	/// <returns> status </returns>
 	bool ept_unhook()
@@ -203,7 +204,7 @@ namespace hvgt
 
 	/// <summary>
 	/// Unhook single function and invalidate tlb
-	/// 卸载指定函数 并刷新tlb
+	/// ??????????? ?????tlb
 	/// </summary>
 	/// <param name="function_address"></param>
 	/// <returns> status </returns>
@@ -215,7 +216,7 @@ namespace hvgt
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 	}
 
-	//读ept伪页内存
+	//??ept??????
 	bool read_ept_fake_page_memory(void* target_address, void* buffer, unsigned __int64 buffer_size)
 	{
 		HookFunctionArgs args{ target_address, buffer, (void**)buffer_size, __readcr3(), 0 };
@@ -224,7 +225,7 @@ namespace hvgt
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 	}
 
-	//读取隐形软件断点
+	//??????????????
 	bool get_hide_software_breakpoint(void* target_address, void* buffer, unsigned __int64 buffer_size)
 	{
 		HookFunctionArgs args{ target_address, buffer, (void**)buffer_size, __readcr3(), 0 };
@@ -233,7 +234,7 @@ namespace hvgt
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 	}
 
-	//设置隐形软件断点
+	//???????????????
 	bool set_hide_software_breakpoint(MDL_MAP* map_table, void* buffer, unsigned __int64 buffer_size)
 	{
 		HookFunctionArgs args{ map_table, buffer, (void**)buffer_size, __readcr3(), 0 };
@@ -257,7 +258,7 @@ namespace hvgt
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 	}
 
-	//广播给所有逻辑处理器
+	//?????????????????
 	bool vmcall(PVOID vmcallinfo)
 	{
 		HookFunctionArgs args = { 0 };

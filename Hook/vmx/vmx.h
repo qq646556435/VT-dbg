@@ -1,7 +1,9 @@
-﻿#pragma once
+#pragma once
 
 #ifndef _VMX_H
 #define _VMX_H
+
+#include "../../Common/VT_Driver/vmcall_obfuscate.h"
 
 enum vm_call_reasons
 {
@@ -40,6 +42,7 @@ EXTERN_C
 	bool __stdcall __vm_call(DWORD vmcall_reason, PVOID vmcallinfo);
 #endif // _WIN64
 }
+
 
 //将线程运行在指定cpu核上
 //CPU核数从0开始

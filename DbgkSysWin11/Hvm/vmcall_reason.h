@@ -3,6 +3,11 @@
 #ifndef _VMCALL_REASON_H
 #define _VMCALL_REASON_H
 
+#include "../../Common/VT_Driver/vmcall_obfuscate.h"
+
+// Guest entry (AsmCallset) fills R14=TSC, R15=token; hypervisor checks vmcall_token.h.
+// Reason codes XOR-mixed before passing in RCX; key lives in vmcall_obfuscate.h.
+
 enum vm_call_reasons
 {
 	VMCALL_TEST,
@@ -27,6 +32,7 @@ enum vm_call_reasons
 	VMCALL_GET_BREAKPOINT,
 	VMCALL_INIT_OFFSET,
 };
+
 
 
 #endif // !_VMCALL_REASON_H

@@ -1,4 +1,4 @@
-﻿#include "../dllmain.h"
+#include "../dllmain.h"
 #include "../Globals.h"
 #include "../Log/Log.h"
 #include "vmx.h"
@@ -44,9 +44,9 @@ bool vmcall_internal(PVOID vmcallinfo)
     __try {
         //若非vmx模式则该指令会触发#UD异常
 #ifdef _WIN64
-        boSuccess = __vm_call(((PVMCALLINFO)vmcallinfo)->command, (unsigned __int64)vmcallinfo, 0, 0);
+        boSuccess = __vm_call(vmcall_reason_encode(((PVMCALLINFO)vmcallinfo)->command), (unsigned __int64)vmcallinfo, 0, 0);
 #else
-        boSuccess = __vm_call(((PVMCALLINFO)vmcallinfo)->command, vmcallinfo);
+        boSuccess = __vm_call(vmcall_reason_encode(((PVMCALLINFO)vmcallinfo)->command), vmcallinfo);
 #endif // _WIN64
 
     }

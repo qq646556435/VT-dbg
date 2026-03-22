@@ -1,10 +1,11 @@
-﻿#pragma once
+#pragma once
 
 #ifndef _MSR_H
 #define _MSR_H
 
 #define IA32_PKRS 0x6E1
 #define IA32_MTRRCAP 0xFE
+#define IA32_TIME_STAMP_COUNTER 0x00000010
 
 #define SYNTHETHIC_MSR_LOW 0x40000000
 #define SYNTHETHIC_MSR_HI  0x400000F0

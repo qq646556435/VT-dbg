@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #ifndef _VMM_H
 #define _VMM_H
@@ -19,5 +19,9 @@ void create_host_page_tables();
 
 //分配vcpu结构内存
 bool init_vcpu(__vcpu* vcpu);
+
+/// Per-vCPU disjoint pages for VMCS / VMXON / host tables / MSR bitmap / stack.
+bool allocate_vcpu_isolated_regions(__vcpu* vcpu);
+void free_vcpu_separate_pages(__vcpu* vcpu);
 
 #endif // !_VMM_H

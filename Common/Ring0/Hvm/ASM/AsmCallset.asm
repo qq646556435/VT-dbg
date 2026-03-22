@@ -84,15 +84,41 @@ no_error:
     ret
 __load_ar endp
 
+; R14 = TSC, R15 = vmcall_compute_token(CR3, TSC); RCX/RDX/R8/R9 (+R10–R13 for ex) = payload.
 __vm_call proc
-    mov rax,0CDAEFAEDBBAEBEEFh
-    vmcall
-    ret
+	push rbx
+	push rsi
+	push rdi
+	mov rbx, rcx
+	rdtsc
+	shl rdx, 32
+	or rax, rdx
+	mov rsi, rax
+	mov rdi, cr3
+	mov rax, rsi
+	mov rcx, rsi
+	shr rcx, 32
+	xor rax, rcx
+	xor rax, rdi
+	mov rcx, rsi
+	shr rcx, 32
+	add rax, rcx
+	mov r14, rsi
+	mov r15, rax
+	mov rcx, rbx
+	pop rdi
+	pop rsi
+	pop rbx
+	push r10
+	xor r10, r10
+	xor r10, r10
+	lea r11, [r11+0]
+	pop r10
+	vmcall
+	ret
 __vm_call endp
 
-__vm_call_ex proc	
-	mov  rax,0CDAEFAEDBBAEBEEFh ; Our vmcall indentitifer
-
+__vm_call_ex proc
 	sub rsp, 30h
 	mov qword ptr [rsp],       r10
 	mov qword ptr [rsp + 8h],  r11
@@ -105,9 +131,35 @@ __vm_call_ex proc
 	mov r11, qword ptr [rsp + 60h]
 	mov r12, qword ptr [rsp + 68h]
 	mov r13, qword ptr [rsp + 70h]
-	mov r14, qword ptr [rsp + 78h]
-	mov r15, qword ptr [rsp + 80h]
 
+	push rbx
+	push rsi
+	push rdi
+	mov rbx, rcx
+	rdtsc
+	shl rdx, 32
+	or rax, rdx
+	mov rsi, rax
+	mov rdi, cr3
+	mov rax, rsi
+	mov rcx, rsi
+	shr rcx, 32
+	xor rax, rcx
+	xor rax, rdi
+	mov rcx, rsi
+	shr rcx, 32
+	add rax, rcx
+	mov r14, rsi
+	mov r15, rax
+	mov rcx, rbx
+	pop rdi
+	pop rsi
+	pop rbx
+	xor rax, rax
+	xor rax, rax
+	lea r10, [r10+0]
+	xchg r11, r11
+	nop
 	vmcall
 	mov r10, qword ptr [rsp]
 	mov r11, qword ptr [rsp + 8h]
@@ -120,6 +172,11 @@ __vm_call_ex proc
 __vm_call_ex endp
 
 __hyperv_vm_call proc
+    push r10
+    xor r10, r10
+    xor r10, r10
+    lea r11, [r11+0]
+    pop r10
     vmcall
     ret
 __hyperv_vm_call endp

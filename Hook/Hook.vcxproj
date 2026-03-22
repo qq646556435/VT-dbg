@@ -187,6 +187,7 @@
     <ClInclude Include="Inject\ShellCode\InjectCode.h" />
     <ClInclude Include="Log\Log.h" />
     <ClInclude Include="vmx\vmx.h" />
+    <ClInclude Include="..\Common\VT_Driver\vmcall_obfuscate.h" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="vmx\Asm\AsmCallset.asm">

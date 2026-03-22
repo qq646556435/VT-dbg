@@ -1,4 +1,4 @@
-﻿#include "Driver.h"
+#include "Driver.h"
 #include "poolmanager.h"
 #include "Globals.h"
 #include "mtrr.h"
@@ -41,6 +41,20 @@ void vmexit_msr_write_handler(__vcpu* vcpu);
 void vmexit_vmx_on_handler(__vcpu* vcpu);
 void vmexit_getsec_handler(__vcpu* vcpu);
 void vmexit_vmx_preemption_handler(__vcpu* vcpu);
+
+static void tsc_skew_commit_vmexit_duration(__vcpu* vcpu)
+{
+	unsigned __int64 const end = __rdtsc();
+	unsigned __int64 const delta = end - vcpu->vmexit_host_cycle_start;
+	vcpu->tsc_guest_skew -= static_cast<__int64>(delta);
+	hv::vmwrite<unsigned __int64>(TSC_OFFSET, static_cast<unsigned __int64>(vcpu->tsc_guest_skew));
+}
+
+static unsigned __int64 guest_visible_tsc_now(__vcpu* vcpu)
+{
+	unsigned __int64 const raw = __rdtsc();
+	return static_cast<unsigned __int64>(static_cast<__int64>(raw) + vcpu->tsc_guest_skew);
+}
 
 //恢复guest状态
 void RestoreGuest()
@@ -160,6 +174,7 @@ bool vmexit_handler(guest_context* guest_registers, PFXSAVE64 fxsave)
 	//从fs_base里取出vcpu的指针
 	//因为在填充host_vmcs字段HOST_FS_BASE时保存的
 	__vcpu* vcpu = reinterpret_cast<__vcpu*>(_readfsbase_u64());
+	vcpu->vmexit_host_cycle_start = __rdtsc();
 
 	guest_registers->rsp = hv::vmread(GUEST_RSP);
 
@@ -188,10 +203,7 @@ bool vmexit_handler(guest_context* guest_registers, PFXSAVE64 fxsave)
 		return true;
 	}
 
-	//hide_vm_exit_overhead(vcpu);
-
-	//hv::vmwrite(TSC_OFFSET, vcpu->tsc_offset);
-	//hv::vmwrite(GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
+	tsc_skew_commit_vmexit_duration(vcpu);
 
 	return false;
 }
@@ -1118,21 +1130,12 @@ void vmexit_invlpg_handler(__vcpu* vcpu)
 //处理rdtscp指令
 void vmexit_rdtscp_handler(__vcpu* vcpu)
 {
-	//
-	// Reads the current value of the processor抯 time-stamp counter (a 64-bit MSR) into the EDX:EAX registers
-	// and also reads the value of the IA32_TSC_AUX MSR (address C0000103H) into the ECX register.
-	// The EDX register is loaded with the high-order 32 bits of the IA32_TSC MSR; 
-	// the EAX register is loaded with the low-order 32 bits of the IA32_TSC MSR; 
-	// and the ECX register is loaded with the low-order 32-bits of IA32_TSC_AUX MSR.
-	// On processors that support the Intel 64 architecture, the high-order 32 bits of each of RAX, RDX, and RCX are cleared.
-	//
-
-	sLog("\n");
-	unsigned __int32 processor_id;
-	unsigned __int64 tsc = __rdtscp(&processor_id);
-	vcpu->vmexit_info.guest_registers->rcx = processor_id;
-	vcpu->vmexit_info.guest_registers->rdx = MASK_GET_HIGHER_32BITS(tsc) >> 32;
-	vcpu->vmexit_info.guest_registers->rax = MASK_GET_LOWER_32BITS(tsc);
+	unsigned int aux = 0;
+	unsigned __int64 const raw = __rdtscp(&aux);
+	unsigned __int64 const tsc = static_cast<unsigned __int64>(static_cast<__int64>(raw) + vcpu->tsc_guest_skew);
+	vcpu->vmexit_info.guest_registers->rcx = aux;
+	vcpu->vmexit_info.guest_registers->rax = static_cast<unsigned __int32>(tsc);
+	vcpu->vmexit_info.guest_registers->rdx = static_cast<unsigned __int32>(tsc >> 32);
 
 	adjust_rip(vcpu);
 }
@@ -1221,20 +1224,9 @@ void vmexit_xsetbv_handler(__vcpu* vcpu)
 
 void vmexit_rdtsc_handler(__vcpu* vcpu)
 {
-	//
-	// Loads the current value of the processor's time-stamp counter into the EDX:EAX registers.
-	// The time-stamp counter is contained in a 64-bit MSR.
-	// The high-order 32 bits of the MSR are loaded into the EDX register, and the low-order 32 bits are loaded into the EAX register.
-	// The processor monotonically increments the time-stamp counter MSR every clock cycle and resets it to 0 whenever the processor is reset.
-	// See "Time Stamp Counter" in Chapter 15 of the IA-32 Intel Architecture Software Developer's Manual, 
-	// Volume 3 for specific details of the time stamp counter behavior.
-	//
-
-	sLog("\n");
-	unsigned __int64 tsc = __rdtsc();
-
-	vcpu->vmexit_info.guest_registers->rdx = MASK_GET_HIGHER_32BITS(tsc) >> 32;
-	vcpu->vmexit_info.guest_registers->rax = MASK_GET_LOWER_32BITS(tsc);
+	unsigned __int64 const tsc = guest_visible_tsc_now(vcpu);
+	vcpu->vmexit_info.guest_registers->rax = static_cast<unsigned __int32>(tsc);
+	vcpu->vmexit_info.guest_registers->rdx = static_cast<unsigned __int32>(tsc >> 32);
 
 	adjust_rip(vcpu);
 }
@@ -1293,6 +1285,13 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 
 	switch (msr_index)
 	{
+	case IA32_TIME_STAMP_COUNTER:
+	{
+		unsigned __int64 const v = guest_visible_tsc_now(vcpu);
+		msr.low = static_cast<unsigned __int32>(v);
+		msr.high = static_cast<unsigned __int32>(v >> 32);
+		break;
+	}
 	case IA32_FEATURE_CONTROL:
 	{
 		__ia32_feature_control_msr feature_msr = { 0 };
