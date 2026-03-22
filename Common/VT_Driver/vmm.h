@@ -14,10 +14,14 @@ bool vmm_init();
 /// </summary>
 void free_vmm_context();
 
-//创建host页表
+//鍒涘缓host椤佃〃
 void create_host_page_tables();
 
-//分配vcpu结构内存
+//鍒嗛厤vcpu缁撴瀯鍐呭瓨
 bool init_vcpu(__vcpu* vcpu);
+
+/// Per-vCPU disjoint pages for VMCS / VMXON / host tables / MSR bitmap / stack.
+bool allocate_vcpu_isolated_regions(__vcpu* vcpu);
+void free_vcpu_separate_pages(__vcpu* vcpu);
 
 #endif // !_VMM_H
